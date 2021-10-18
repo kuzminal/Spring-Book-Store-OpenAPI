@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookstore_modern
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        default_schema: bookstore
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+    generate-ddl: false
+    hibernate:
+      ddl-auto: update
+  flyway:
+    url: jdbc:postgresql://localhost:5432/bookstore_modern
+    schemas: bookstore
+    user: user
+    password: password
+
+
+

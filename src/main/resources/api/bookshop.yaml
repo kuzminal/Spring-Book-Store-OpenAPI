@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: Книжный магазин
+  description:
+    Это описание API для книжного магазина
+  contact:
+    name: Aleksey Kuzmin
+    email: support@packtpub.com
+  version: 1.0.0
+servers:
+  - url: https://bookshop.swagger.io/v1
+tags:
+  - name: user
+    description: Пользователи
+  - name: books
+    description: Каталог книг
+paths:
+  /api/v1/books:
+    get:
+      tags:
+        - books
+      summary: Список всех книг
+      description: Возвращает список книг согласно критериям поиска
+      operationId: queryBooks
+      parameters:
+        - name: id
+          in: query
+          description: Идентификатор книги
+          required: false
+          schema:
+            type: string
+        - name: title
+          in: query
+          description: Название книги
+          required: false
+          schema:
+            type: string
+        - name: ISBN
+          in: query
+          description: ISBN
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Номер запрашиваемой страницы
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 1
+        - name: size
+          in: query
+          description: Размер запрашиваемой страницы
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10
+      responses:
+        200:
+          description: Для успешного ответа.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+  /api/v1/books/{id}:
+    get:
+      tags:
+        - books
+      summary: Возвращает конкретную книгу из каталога
+      description: Возвращает конкретную книгу из каталога по идентификатору
+      operationId: getBook
+      parameters:
+        - name: id
+          in: path
+          description: Идентификатор книги
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Для успешного ответа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+  /api/v1/customers:
+    get:
+      tags:
+        - user
+      summary: Возвращает всех клиентов
+      description: Возвращает всех клиентов или пустой ответ, если пользователи не найдены
+      operationId: getAllCustomers
+      responses:
+        200:
+          description: Для успешного ответа.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /api/v1/customers/{id}:
+    get:
+      tags:
+        - user
+      summary: Возвращает клиента
+      description: Возвращает конкретного клиента про предоставленному идентификатору
+      operationId: getCustomerById
+      parameters:
+        - name: id
+          in: path
+          description: Идентификатор клиента
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Для успешного ответа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags:
+        - user
+      summary: Удалить клиента
+      description: Удалить клиента по предоставленному идентификатору
+      operationId: deleteCustomerById
+      parameters:
+        - name: id
+          in: path
+          description: Идентификатор клиента
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Запрос принят, возвращается данный статус даже если клиент не найден
+          content: {}
+components:
+  schemas:
+    Book:
+      description: Информация о книге
+      type: object
+      properties:
+        id:
+          description: Идентификатор книги
+          type: integer
+          format: int64
+        title:
+          description: Название книги
+          type: string
+        isbn:
+          description: Международный стандартный книжный номер
+          type: string
+        annotation:
+          description: Описание книги
+          type: string
+        imageCover:
+          description: Картинка обложки
+          type: string
+          format: byte
+        genre:
+          #description: Жанр книги
+          $ref: '#/components/schemas/Genre'
+        authors:
+          description: Авторы книги
+          type: array
+          items:
+            $ref: '#/components/schemas/Authors'
+        price:
+          description: Цена книги
+          type: number
+          format: double
+        count:
+          description: Количество
+          type: integer
+          format: int32
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+    Authors:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
