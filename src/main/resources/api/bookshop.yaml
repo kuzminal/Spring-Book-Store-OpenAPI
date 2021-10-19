@@ -140,7 +140,8 @@ paths:
           description: Идентификатор автора
           required: true
           schema:
-            type: string
+            type: integer
+            format: int64
       responses:
         202:
           description: Запрос принят, возвращается данный статус даже если автор не найден
