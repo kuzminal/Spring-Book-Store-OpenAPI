@@ -1,28 +1,27 @@
 package com.kuzmin.bookstore.model;
 
 import lombok.*;
-import org.hibernate.Hibernate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@Entity
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Table(name = "books")
+@Table("books")
 public class BookEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
@@ -36,12 +35,9 @@ public class BookEntity implements Serializable {
 
     private byte[] imageCover;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "genre_id")
     @ToString.Exclude
     private GenreEntity genre;
 
-    @ManyToMany(mappedBy = "books")
     @ToString.Exclude
     private Set<AuthorsEntity> authors = new HashSet<>();
 
@@ -57,13 +53,15 @@ public class BookEntity implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         BookEntity that = (BookEntity) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(id, that.id) && Objects.equals(title, that.title) && Objects.equals(isbn, that.isbn) && Objects.equals(annotation, that.annotation) && Arrays.equals(imageCover, that.imageCover) && Objects.equals(genre, that.genre) && Objects.equals(authors, that.authors) && Objects.equals(price, that.price) && Objects.equals(count, that.count);
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        int result = Objects.hash(id, title, isbn, annotation, genre, authors, price, count);
+        result = 31 * result + Arrays.hashCode(imageCover);
+        return result;
     }
 }

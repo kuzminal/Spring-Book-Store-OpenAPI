@@ -3,47 +3,69 @@ package com.kuzmin.bookstore.hateoas;
 import com.kuzmin.bookstore.api.model.Book;
 import com.kuzmin.bookstore.controller.BooksController;
 import com.kuzmin.bookstore.model.BookEntity;
-import com.kuzmin.bookstore.service.AuthorsService;
-import com.kuzmin.bookstore.service.GenreService;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
-import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSupport;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.reactive.ReactiveRepresentationModelAssembler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.StreamSupport;
 
-import static java.util.stream.Collectors.toList;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class BookRepresentationModelAssembler extends RepresentationModelAssemblerSupport<BookEntity, Book> {
-    private final GenreRepresentationModelAssembler genreRepresentationModelAssembler;
-    private final AuthorRepresentationModelAssembler authorRepresentationModelAssembler;
-
-    public BookRepresentationModelAssembler(AuthorsService authorsService, GenreService genreService, GenreRepresentationModelAssembler genreRepresentationModelAssembler, AuthorRepresentationModelAssembler authorRepresentationModelAssembler) {
-        super(BooksController.class, Book.class);
-        this.genreRepresentationModelAssembler = genreRepresentationModelAssembler;
-        this.authorRepresentationModelAssembler = authorRepresentationModelAssembler;
-    }
+public class BookRepresentationModelAssembler implements ReactiveRepresentationModelAssembler<BookEntity, Book>, HateoasSupport {
+    private static String serverUri = null;
 
     @Override
-    public Book toModel(BookEntity entity) {
+    public Mono<Book> toModel(BookEntity entity, ServerWebExchange exchange) {
         Book resource = new Book();
         BeanUtils.copyProperties(entity, resource);
         resource.setId(entity.getId());
-        resource.setAuthors(authorRepresentationModelAssembler.toListModel(entity.getAuthors()));
-        resource.setGenre(genreRepresentationModelAssembler.toModel(entity.getGenre()));
         resource.add(
-                linkTo(methodOn(BooksController.class).getBook(entity.getId()))
+                linkTo(methodOn(BooksController.class).getBook(entity.getId(), exchange))
                         .withSelfRel());
+        return Mono.just(resource);
+    }
+
+    public Flux<Book> toListModel(Flux<BookEntity> entities, ServerWebExchange exchange) {
+        if (Objects.isNull(entities)) {
+            return Flux.empty();
+        }
+        return Flux.from(entities.map(e -> entityToModel(e, exchange)));
+    }
+
+    public Book entityToModel(BookEntity entity, ServerWebExchange exchange) {
+        Book resource = new Book();
+        if(Objects.isNull(entity)) {
+            return resource;
+        }
+        BeanUtils.copyProperties(entity, resource);
+        resource.id(entity.getId())
+                .annotation(entity.getAnnotation())
+                .count(entity.getCount())
+                .imageCover(entity.getImageCover())
+                .isbn(entity.getIsbn())
+                .price(entity.getPrice())
+                //.authors(authorRepresentationModelAssembler.toListModel(Flux.fromIterable(entity.getAuthors()), exchange))
+                //.genre(entity.getGenre())
+                .title(entity.getTitle());
+        String serverUri = getServerUri(exchange);
+        resource.add(Link.of(String.format("%s/api/v1/orders", serverUri)).withRel("orders"));
+        resource.add(
+                Link.of(String.format("%s/api/v1/Orders/%s", serverUri, entity.getId())).withSelfRel());
         return resource;
     }
 
-    public List<Book> toListModel(Iterable<BookEntity> entities) {
-        if (Objects.isNull(entities)) return Collections.emptyList();
-        return StreamSupport.stream(entities.spliterator(), false).map(this::toModel).collect(toList());
+    private String getServerUri(@Nullable ServerWebExchange exchange) {
+        if (Strings.isBlank(serverUri)) {
+            serverUri = getUriComponentBuilder(exchange).toUriString();
+        }
+        return serverUri;
     }
 }

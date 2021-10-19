@@ -1,9 +1,15 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/bookstore_modern
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/bookstore_modern
     username: user
     password: password
-    driver-class-name: org.postgresql.Driver
+    properties:
+      schema: bookstore
+  #  datasource:
+#    url: jdbc:postgresql://localhost:5432/bookstore_modern
+#    username: user
+#    password: password
+#    driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
     properties:

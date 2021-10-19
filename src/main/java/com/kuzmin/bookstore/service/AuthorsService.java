@@ -22,7 +22,7 @@ public class AuthorsService {
         return authorRepository.findById(id);
     }
 
-    public void deleteAuthorById(Long id) {
-        authorRepository.deleteById(id);
+    public Mono<Void> deleteAuthorById(Long id) {
+        return authorRepository.deleteById(id);
     }
 }

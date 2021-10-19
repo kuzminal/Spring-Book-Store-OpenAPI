@@ -4,18 +4,18 @@ import com.kuzmin.bookstore.api.AuthorsApi;
 import com.kuzmin.bookstore.api.model.Author;
 import com.kuzmin.bookstore.hateoas.AuthorRepresentationModelAssembler;
 import com.kuzmin.bookstore.service.AuthorsService;
-import io.swagger.annotations.ApiParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
+import static org.springframework.http.ResponseEntity.*;
 
-import static org.springframework.http.ResponseEntity.notFound;
-import static org.springframework.http.ResponseEntity.ok;
-
-@Controller
+@RestController
 public class AuthorsController implements AuthorsApi {
     private final AuthorsService authorsService;
     private final AuthorRepresentationModelAssembler authorRepresentationModelAssembler;
@@ -26,25 +26,21 @@ public class AuthorsController implements AuthorsApi {
     }
 
     @Override
-    public ResponseEntity<List<Author>> getAllAuthors() {
-        return ok(authorRepresentationModelAssembler.toListModel(authorsService.getAllAuthors()));
+    public Mono<ResponseEntity<Flux<Author>>> getAllAuthors(final ServerWebExchange exchange) {
+        return Mono.just(ok(authorRepresentationModelAssembler.toListModel(authorsService.getAllAuthors(), exchange)));
     }
 
     @Override
-    public ResponseEntity<Author> getAuthorById(@PathVariable("id") Long id) {
+    public Mono<ResponseEntity<Author>> getAuthorById(@PathVariable("id") Long id, final ServerWebExchange exchange) {
+        return authorsService.getAuthorById(id).map(c -> authorRepresentationModelAssembler.entityToModel(c, exchange))
+                .map(ResponseEntity::ok).defaultIfEmpty(notFound().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteAuthorById(@PathVariable("id") Long id, final ServerWebExchange exchange) {
         return authorsService.getAuthorById(id)
-                .map(authorRepresentationModelAssembler::toModel)
-                .map(ResponseEntity::ok)
-                .orElse(notFound().build());
-    }
-
-    @Override
-    public ResponseEntity<Void> deleteAuthorById(@PathVariable("id") Long id) {
-        if (authorsService.getAuthorById(id).isPresent()) {
-            authorsService.deleteAuthorById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+                .flatMap(a -> authorsService.deleteAuthorById(a.getId()))
+                .then(Mono.just(status(HttpStatus.ACCEPTED).<Void>build()))
+                .switchIfEmpty(Mono.just(notFound().build()));
     }
 }
