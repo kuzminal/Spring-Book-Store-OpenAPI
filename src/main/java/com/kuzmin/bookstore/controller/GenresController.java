@@ -4,16 +4,17 @@ import com.kuzmin.bookstore.api.GenresApi;
 import com.kuzmin.bookstore.api.model.Genre;
 import com.kuzmin.bookstore.hateoas.GenreRepresentationModelAssembler;
 import com.kuzmin.bookstore.service.GenreService;
-import io.swagger.annotations.ApiParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
-
-import java.util.List;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 
 @Controller
 public class GenresController implements GenresApi {
@@ -26,26 +27,21 @@ public class GenresController implements GenresApi {
     }
 
     @Override
-    public ResponseEntity<List<Genre>> getAllGenres() {
-        return ok(genreRepresentationModelAssembler.toListModel(genreService.getAllGenres()));
-
+    public Mono<ResponseEntity<Flux<Genre>>> getAllGenres(final ServerWebExchange exchange) {
+        return Mono.just(ok(genreRepresentationModelAssembler.toListModel(genreService.getAllGenres(), exchange)));
     }
 
     @Override
-    public ResponseEntity<Genre> getGenreById(@PathVariable("id") Long id) {
+    public Mono<ResponseEntity<Genre>> getGenreById(@PathVariable("id") Long id, final ServerWebExchange exchange) {
+        return genreService.getGenreById(id).map(c -> genreRepresentationModelAssembler.entityToModel(c, exchange))
+                .map(ResponseEntity::ok).defaultIfEmpty(notFound().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteGenreById(@PathVariable("id") Long id, final ServerWebExchange exchange) {
         return genreService.getGenreById(id)
-                .map(genreRepresentationModelAssembler::toModel)
-                .map(ResponseEntity::ok)
-                .orElse(notFound().build());
-    }
-
-    @Override
-    public ResponseEntity<Void> deleteGenreById(@PathVariable("id") Long id) {
-        if (genreService.getGenreById(id).isPresent()) {
-            genreService.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+                .flatMap(a -> genreService.deleteById(a.getId()))
+                .then(Mono.just(status(HttpStatus.ACCEPTED).<Void>build()))
+                .switchIfEmpty(Mono.just(notFound().build()));
     }
 }

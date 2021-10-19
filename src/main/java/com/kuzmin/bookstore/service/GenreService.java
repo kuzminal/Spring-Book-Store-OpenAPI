@@ -3,9 +3,8 @@ package com.kuzmin.bookstore.service;
 import com.kuzmin.bookstore.model.GenreEntity;
 import com.kuzmin.bookstore.repository.GenreRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class GenreService {
@@ -15,15 +14,15 @@ public class GenreService {
         this.genreRepository = genreRepository;
     }
 
-    public List<GenreEntity> getAllGenres() {
+    public Flux<GenreEntity> getAllGenres() {
         return genreRepository.findAll();
     }
 
-    public Optional<GenreEntity> getGenreById(Long id) {
+    public Mono<GenreEntity> getGenreById(Long id) {
         return genreRepository.findById(id);
     }
 
-    public void deleteById(Long id) {
-        genreRepository.deleteById(id);
+    public Mono<Void> deleteById(Long id) {
+        return genreRepository.deleteById(id);
     }
 }

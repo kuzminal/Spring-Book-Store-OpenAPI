@@ -3,9 +3,8 @@ package com.kuzmin.bookstore.service;
 import com.kuzmin.bookstore.model.BookEntity;
 import com.kuzmin.bookstore.repository.BookRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class BookService {
@@ -15,11 +14,11 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public List<BookEntity> getAllBooks() {
+    public Flux<BookEntity> getAllBooks() {
         return bookRepository.findAll();
     }
 
-    public Optional<BookEntity> getBookById(Long id) {
+    public Mono<BookEntity> getBookById(Long id) {
         return bookRepository.findById(id);
     }
 
