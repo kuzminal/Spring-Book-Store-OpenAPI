@@ -277,6 +277,9 @@ components:
           type: string
         email:
           type: string
+        version:
+          type: integer
+          format: int64
     Genre:
       type: object
       properties:

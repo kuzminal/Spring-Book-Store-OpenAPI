@@ -8,11 +8,6 @@ import org.springframework.web.filter.ShallowEtagHeaderFilter;
 @SpringBootApplication
 public class BookStoreApplication {
 
-    @Bean
-    public ShallowEtagHeaderFilter shallowEtagHeaderFilter() {
-        return new ShallowEtagHeaderFilter();
-    }
-
         public static void main(String[] args) {
         SpringApplication.run(BookStoreApplication.class, args);
     }

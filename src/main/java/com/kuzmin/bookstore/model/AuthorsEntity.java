@@ -2,6 +2,7 @@ package com.kuzmin.bookstore.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 
 import javax.validation.constraints.NotBlank;
@@ -32,6 +33,9 @@ public class AuthorsEntity implements Serializable {
     private String lastName;
 
     private String email;
+
+    @Version
+    private long version;
 
     @ToString.Exclude
     private Set<BookEntity> books = new HashSet<>();
